@@ -25,6 +25,12 @@ Colombia's **Bre-B** (live 2025, **200+ institutions**) launched with **no recov
 
 → Research: **[summary](docs/research.md)** · **[full investigation](docs/research-full.md)** (includes the global landscape of 100+ instant payment systems).
 
+## Architecture
+
+![Reversa architecture — multi-agent recovery pipeline on Vertex AI Agent Engine](docs/reversa-architecture.png)
+
+Four specialized agents run as one `SequentialAgent` pipeline on Vertex AI Agent Engine: **intake** structures the victim's report (rail + language detection), **tracing** follows the money hop-by-hop through the mule graph and checks the Memory Bank for known mules, **action** issues the ISO 20022 camt.056 recall, and **evidence** writes the regulator-grade dossier grounded in the normative corpus (Vertex AI Search). The pipeline is also exposed over the A2A protocol, so partner-bank agents (like the included `banco_andes` demo) can delegate cases to it.
+
 ## Project Structure
 
 ```
@@ -119,13 +125,7 @@ make deploy
 ```
 Every push to `main` also deploys automatically via GitHub Actions (WIF, no service-account keys) — see `.github/workflows/staging.yaml`.
 
-**Live deployment (hackathon)**: Agent Engine `reasoningEngines/4059650367179194368`, `us-central1`, project `reversa-datamirai` — [Console](https://console.cloud.google.com/vertex-ai/agents/agent-engines/locations/us-central1/agent-engines/4059650367179194368?project=reversa-datamirai) · [A2A agent card](https://us-central1-aiplatform.googleapis.com/v1beta1/projects/reversa-datamirai/locations/us-central1/reasoningEngines/4059650367179194368/a2a/v1/card) (requires a `gcloud auth print-access-token` bearer).
-
-## Submission assets (pending)
-
-- [ ] Demo video link
-- [ ] Devpost submission link
-- [ ] Architecture diagram
+**Live deployment**: Agent Engine `reasoningEngines/4059650367179194368`, `us-central1`, project `reversa-datamirai` — [Console](https://console.cloud.google.com/vertex-ai/agents/agent-engines/locations/us-central1/agent-engines/4059650367179194368?project=reversa-datamirai) · [A2A agent card](https://us-central1-aiplatform.googleapis.com/v1beta1/projects/reversa-datamirai/locations/us-central1/reasoningEngines/4059650367179194368/a2a/v1/card) (requires a `gcloud auth print-access-token` bearer).
 
 ## Observability
 
@@ -136,3 +136,7 @@ See the [observability guide](https://googlecloudplatform.github.io/agent-starte
 
 This agent supports the [A2A Protocol](https://a2a-protocol.org/). Use `make inspector` to test interoperability.
 See the [A2A Inspector docs](https://github.com/a2aproject/a2a-inspector) for details.
+
+---
+
+Built by Gabriel Cuadros & Daniel Moreno — DataMirai, Bogotá
