@@ -89,9 +89,12 @@ jobs:
         run: |
           export _AUTH_TOKEN="${{ steps.fetch-token.outputs._auth_token }}"
           pip install locust==2.31.1
+          # Gate E2E de UN caso: el pipeline (4 agentes + RAG) tarda 1-3 min
+          # por caso; -t es solo el tope duro. El locustfile corre un caso y
+          # termina (runner.quit), exigiendo expediente final.
           locust -f tests/load_test/load_test.py \
           --headless \
-          -t 30s -u 2 -r 0.5 \
+          -t 300s -u 1 -r 1 \
           --csv=tests/load_test/.results/results \
           --html=tests/load_test/.results/report.html
 

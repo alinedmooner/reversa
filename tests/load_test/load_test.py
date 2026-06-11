@@ -43,6 +43,21 @@ logger.info("Using base URL: %s", base_url)
 logger.info("Using API base path: %s", a2a_base_path)
 
 
+def _collect_text(node: object) -> list[str]:
+    """Recolecta recursivamente los valores de claves 'text' (partes A2A)."""
+    texts: list[str] = []
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "text" and isinstance(value, str):
+                texts.append(value)
+            else:
+                texts.extend(_collect_text(value))
+    elif isinstance(node, list):
+        for item in node:
+            texts.extend(_collect_text(item))
+    return texts
+
+
 class SendMessageUser(HttpUser):
     """Simulates a user interacting with the send message API."""
 
@@ -51,7 +66,18 @@ class SendMessageUser(HttpUser):
 
     @task
     def send_message_and_poll(self) -> None:
-        """Simulates a chat interaction: sends a message and polls for completion."""
+        """Corre UN caso E2E y termina la corrida (gate determinista de CI).
+
+        Éxito, fallo o timeout: el resultado queda registrado en las stats
+        (y en el exit code de locust); no se encolan casos adicionales.
+        """
+        try:
+            self._run_case()
+        finally:
+            self.environment.runner.quit()
+
+    def _run_case(self) -> None:
+        """Sends a message and polls for completion, asserting a final dossier."""
         headers = {"Content-Type": "application/json"}
         headers["Authorization"] = f"Bearer {os.environ['_AUTH_TOKEN']}"
 
@@ -87,9 +113,13 @@ class SendMessageUser(HttpUser):
                 logger.error(f"Failed to extract task ID: {e}")
                 return
 
-        # Poll for task completion
-        max_polls = 20  # Maximum number of poll attempts
-        poll_interval = 0.5  # Seconds between polls
+        # Poll for task completion.
+        # El pipeline encadena 4 agentes (LLM + tools + RAG + expediente
+        # largo): un caso legítimo tarda 1-3 minutos. Presupuesto: 48 polls
+        # x 5s = 240s por tarea (los defaults del scaffold — 20x0.5s — están
+        # calibrados para un agente trivial).
+        max_polls = 48  # Maximum number of poll attempts
+        poll_interval = 5.0  # Seconds between polls
         poll_count = 0
 
         while poll_count < max_polls:
@@ -119,6 +149,15 @@ class SendMessageUser(HttpUser):
 
                 # Check if task is complete
                 if task_state in ["TASK_STATE_COMPLETED"]:
+                    # Gate E2E real: la tarea debe terminar CON expediente
+                    # (artefactos con texto sustancial), no solo completar.
+                    dossier = "\n".join(_collect_text(poll_data.get("artifacts")))
+                    if len(dossier) < 200:
+                        poll_response.failure(
+                            "Task completed without a final dossier "
+                            f"(artifact text: {len(dossier)} chars)"
+                        )
+                        return
                     poll_response.success()
 
                     # Measure end-to-end time

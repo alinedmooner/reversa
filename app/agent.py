@@ -23,13 +23,30 @@ os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "us-central1")
 from google.adk.agents import LlmAgent, SequentialAgent
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.apps import App
+from google.adk.models import Gemini
 from google.adk.tools import VertexAiSearchTool, load_memory
+from google.genai import types
 
 from .money_graph import trace_funds
 from .recall import issue_recall
 
 # Vertex no acepta alias de AI Studio (gemini-flash-latest): ID versionado.
 MODEL = "gemini-2.5-flash"
+
+
+def _gemini() -> Gemini:
+    """Modelo con reintentos con backoff para 429 RESOURCE_EXHAUSTED.
+
+    Proyecto nuevo = cuota Gemini baja; el pipeline encadena 4+ llamadas por
+    caso y sin retry una ráfaga de 429 aborta el caso entero
+    (TASK_STATE_FAILED en Agent Engine). ~60s de presupuesto de backoff.
+    """
+    return Gemini(
+        model=MODEL,
+        retry_options=types.HttpRetryOptions(
+            attempts=6, initial_delay=2, max_delay=30
+        ),
+    )
 
 # Data store de Vertex AI Search con el manual normativo (docs/).
 _project = os.environ.get("GOOGLE_CLOUD_PROJECT", "")
@@ -56,7 +73,7 @@ def get_current_time() -> dict:
 
 intake_agent = LlmAgent(
     name="intake",
-    model=MODEL,
+    model=_gemini(),
     description="Convierte el reporte de la víctima en datos estructurados del caso.",
     instruction=(
         "Eres el agente de intake de Reversa. Del reporte de la víctima extrae SOLO un JSON "
@@ -70,7 +87,7 @@ intake_agent = LlmAgent(
 
 tracing_agent = LlmAgent(
     name="tracing",
-    model=MODEL,
+    model=_gemini(),
     description="Rastrea a dónde se movió el dinero a través de cuentas mula.",
     instruction=(
         "Eres el agente de rastreo de Reversa. Datos del caso: {intake_json}\n"
@@ -88,7 +105,7 @@ tracing_agent = LlmAgent(
 
 action_agent = LlmAgent(
     name="action",
-    model=MODEL,
+    model=_gemini(),
     description="Ejecuta el bloqueo camt.056 cuando los fondos son interceptables.",
     instruction=(
         "Eres el agente de acción de Reversa. Datos del caso: {intake_json}\n"
@@ -104,7 +121,7 @@ action_agent = LlmAgent(
 
 evidence_agent = LlmAgent(
     name="evidence",
-    model=MODEL,
+    model=_gemini(),
     description="Redacta el expediente final del caso para el banco/regulador.",
     instruction=(
         "Eres el agente de evidencia de Reversa. Redacta el expediente final del caso en "
