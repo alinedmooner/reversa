@@ -83,18 +83,21 @@ build-inspector-if-needed:
 # Usage: make deploy [AGENT_IDENTITY=true] [SECRETS="KEY=SECRET_ID,..."] - Set AGENT_IDENTITY=true to enable per-agent IAM identity (Preview)
 deploy:
 	# Stage limpio del paquete: el tarball de vertexai empaqueta TODO el
-	# directorio (incluye .env y __pycache__ si no se excluyen). Requirements
-	# explícitos del contenedor (LESSONS.md): google-adk[a2a] + pins otel.
+	# directorio (incluye .env y __pycache__ si no se excluyen) y guarda los
+	# paths TAL CUAL se pasan (tar.add), así que el deploy corre DESDE el stage
+	# para que el paquete viaje como app/... Requirements explícitos del
+	# contenedor (LESSONS.md): google-adk[a2a] + pins otel.
 	rm -rf .deploy_src && mkdir -p .deploy_src && \
 	rsync -a --exclude='.env' --exclude='__pycache__' --exclude='.requirements.txt' app/ .deploy_src/app/ && \
 	cp app/requirements.txt .deploy_src/app/app_utils/.requirements.txt && \
-	python -m app.app_utils.deploy \
-		--source-packages=.deploy_src/app \
+	(cd .deploy_src && python -m app.app_utils.deploy \
+		--source-packages=./app \
 		--entrypoint-module=app.agent_engine_app \
 		--entrypoint-object=agent_engine \
-		--requirements-file=.deploy_src/app/app_utils/.requirements.txt \
+		--requirements-file=app/app_utils/.requirements.txt \
 		$(if $(AGENT_IDENTITY),--agent-identity) \
-		$(if $(filter command line,$(origin SECRETS)),--set-secrets="$(SECRETS)")
+		$(if $(filter command line,$(origin SECRETS)),--set-secrets="$(SECRETS)")) && \
+	cp .deploy_src/deployment_metadata.json deployment_metadata.json
 
 # Alias for 'make deploy' for backward compatibility
 backend: deploy

@@ -24,6 +24,7 @@ from typing import Any
 import click
 import google.auth
 import vertexai
+from a2a.utils import proto_utils
 from google.cloud import resourcemanager_v3
 from google.iam.v1 import iam_policy_pb2, policy_pb2
 from vertexai._genai import _agent_engines_utils
@@ -43,10 +44,25 @@ def generate_class_methods_from_agent(agent_instance: Any) -> list[dict[str, Any
     registered_operations = _agent_engines_utils._get_registered_operations(
         agent=agent_instance
     )
-    class_methods_spec = _agent_engines_utils._generate_class_methods_spec_or_raise(
-        agent=agent_instance,
-        operations=registered_operations,
-    )
+    # vertexai serializa agent_card con protobuf json_format.MessageToJson,
+    # pero el card que construye el AgentCardBuilder de ADK es pydantic
+    # (a2a.types.AgentCard) → AttributeError: no attribute 'DESCRIPTOR'.
+    # Swap temporal al proto equivalente SOLO durante la generación del spec;
+    # el runtime sigue necesitando el card pydantic (A2aAgent.set_up() le
+    # asigna .url y el servidor A2A lo consume como pydantic).
+    pydantic_card = getattr(agent_instance, "agent_card", None)
+    if pydantic_card is not None and not hasattr(pydantic_card, "DESCRIPTOR"):
+        agent_instance.agent_card = proto_utils.ToProto.agent_card(pydantic_card)
+    try:
+        class_methods_spec = (
+            _agent_engines_utils._generate_class_methods_spec_or_raise(
+                agent=agent_instance,
+                operations=registered_operations,
+            )
+        )
+    finally:
+        if pydantic_card is not None:
+            agent_instance.agent_card = pydantic_card
     class_methods_list = [
         _agent_engines_utils._to_dict(method_spec) for method_spec in class_methods_spec
     ]
