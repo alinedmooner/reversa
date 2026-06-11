@@ -7,6 +7,20 @@ y memoria institucional de mulas (Memory Bank).
 
 Scaffold generado con [`googleCloudPlatform/agent-starter-pack`](https://github.com/GoogleCloudPlatform/agent-starter-pack) versión `0.41.3` (template `adk_a2a`, CI/CD GitHub Actions). Ver gotchas aplicados en [LESSONS.md](LESSONS.md).
 
+## Why Reversa — the research
+
+Instant payment rails (100+ jurisdictions live) settle in seconds and are irrevocable — and that combination created a crime that runs in minutes: authorized-push-payment fraud, where the victim is manipulated or coerced ("sequestro relâmpago") into sending the transfer themselves, and the money layers through 2–5 mule accounts before cashing out. Brazil measured what human-paced recovery achieves against that clock: the **MED** recovers **~7–14%** of stolen amounts depending on period and methodology — the BCB's **official 2025 figure is 7% of disputed value, with ~89% of refund requests denied**. **MED 2.0** (mandatory **Feb 2, 2026**) extends tracing to **five account layers** — institutional confirmation that recovery is a multi-hop tracing *and speed* problem, yet the loop still runs at human speed.
+
+Colombia's **Bre-B** (live 2025, **200+ institutions**) launched with **no recovery mechanism at all**: disputes move at help-desk speed under SFC oversight, against a crime that moves at network speed. That asymmetry defines Reversa's two pilot markets — and its category: autonomous **recovery**, not prevention.
+
+| | **Brazil / Pix** | **Colombia / Bre-B** |
+|---|---|---|
+| Recovery mechanism | MED (since 2021), MED 2.0 (mandatory Feb 2026, 5 account layers) | **None** |
+| Measured recovery | ~7–14% (official 2025: **7% of disputed value**, ~89% of requests denied) | No standardized measurement |
+| What Reversa is there | *The upgrade*: beat a mechanism that exists and underperforms | *The first mechanism*: greenfield |
+
+→ Research: **[summary](docs/research.md)** · **[full investigation](docs/research-full.md)** (includes the global landscape of 100+ instant payment systems).
+
 ## Project Structure
 
 ```

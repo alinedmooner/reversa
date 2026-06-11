@@ -1,55 +1,40 @@
-# The Research Behind Reversa
+# Reversa — Research Summary
 
-> This project did not start from a technology looking for a problem. It started from a domain investigation into instant-payment fraud in Latin America — this document summarizes what we found and why it pointed to an empty, winnable category: **autonomous fraud recovery**. All figures come from public sources (central bank publications and industry reporting); everything in the Reversa demo itself is synthetic.
+> The condensed version of the domain investigation that originated this project. Full investigation, with the global comparative landscape of 100+ instant payment systems: **[research-full.md](research-full.md)**. All figures from public sources (central banks, BIS, ECB, ACI Worldwide); everything in the Reversa demo itself is synthetic.
 
-## 1. The world moved to instant, irrevocable money
+## 1. Money became instant — and final
 
-Instant payment rails are the fastest-adopted financial infrastructure of the decade: Brazil's **Pix** (2020) became the country's dominant payment method within a few years, India's UPI processes billions of transactions monthly, and dozens of countries now operate or are building similar rails. In 2025 Colombia launched **Bre-B**, operated by Banco de la República, interconnecting the financial system (over two hundred participating institutions) around instant transfers addressed by simple keys ("llaves").
+Instant payment rails are the fastest-adopted financial infrastructure of the decade: **more than 100 jurisdictions** run live systems (the ECB counts **117** as of mid-2025). Brazil's **Pix** moved ~63.4 billion transactions in 2024 — the highest fast-payment usage per capita in the world. In 2025, Colombia launched **Bre-B** (Banco de la República): instant, 24/7, key-addressed transfers across **200+ institutions**, with ~76 million keys registered in its first months. Two properties define all of these rails: **speed** (settlement in seconds) and **irrevocability** (no chargeback). For commerce, features. For fraud, an attack surface.
 
-Two properties define these rails — and define the fraud problem:
+## 2. The crime runs in minutes
 
-1. **Speed**: settlement in seconds, 24/7.
-2. **Irrevocability**: once settled, the transfer is final. There is no chargeback.
+The dominant fraud is **authorized-push-payment (APP)**: the victim is manipulated (phishing, impersonation — Brazil's "golpe do falso parente") or coerced (the infamous "sequestro relâmpago") into sending the transfer themselves. Prevention models structurally underperform here — the rightful owner authorizes the payment. The stolen money then **layers through 2–5 mule accounts** across institutions and **cashes out** (typically USDT or cash) within minutes. The race between the victim's report and the cashout is the whole game.
 
-## 2. Fraud adapted faster than defenses
+## 3. Brazil measured the failure: the MED recovers 7%
 
-The dominant fraud on instant rails is not card cloning — it is **authorized-push-payment fraud**: the victim is manipulated (phishing, impersonation of banks or relatives) or coerced (in Brazil, the "sequestro relâmpago" — express kidnapping — became infamous precisely because Pix lets a captor drain accounts in minutes) into sending an instant, irrevocable transfer.
+Brazil built the official answer — the **MED** (Mecanismo Especial de Devolução, 2021): standardized freeze-and-return requests with analysis windows of days. The result is this project's most important number: **the MED recovers only ~7–14% of stolen amounts depending on period and methodology — the BCB's official 2025 figure is 7% of disputed value, with ~89% of refund requests denied** (the money is already gone, or the account closed). Not bad design: **human latency**. **MED 2.0** (mandatory Feb 2, 2026) extends tracing to **five account layers** and allows blocking intermediate accounts — institutional confirmation that recovery is a *multi-hop tracing and speed* problem. But the loop is still human-paced.
 
-The stolen money then runs a well-known playbook: it hops through **layers of mule accounts** (recruited or rented accounts at multiple institutions) within minutes, and **cashes out** — typically to crypto (USDT) or cash — before anyone reviews anything. The race between the victim's report and the cashout is measured in **minutes**.
+## 4. Colombia has nothing
 
-## 3. Brazil built a recovery mechanism — and it loses the race
+Bre-B launched with **no MED equivalent**: no standardized tracing, no freeze request, no clock. Victims depend on each bank's customer service under SFC oversight — and the SFC cannot order refunds. Disputes move at help-desk speed against a crime that moves at network speed. In Colombia, an autonomous recovery layer is not competing with an incumbent mechanism — **it is the first mechanism**.
 
-Brazil's central bank answered with the **MED (Mecanismo Especial de Devolução)**, launched in November 2021: a standardized procedure for a victim's bank to request the freezing and return of fraudulent Pix transfers, with analysis windows measured in days.
+## 5. The category: recovery, not prevention
 
-The result is the single most important number in this project: **the MED recovers roughly 9–14% of stolen amounts** (around 13% in recent reporting, and lower across full-year figures). Not because the mechanism is badly designed — but because it runs at **human speed**. By the time a human analyst reviews the case, the money has already layered through mule accounts and left the system. The MED is a recovery mechanism that arrives after the race is over.
+The industry sells prevention; almost nobody competes in **recovery** — the money prevention misses, today written off as lost. The research says it isn't lost; it is *faster than the humans chasing it*. (The UK's mandatory APP reimbursement — 88% of losses repaid in year one — confirms the gap from the other side: reimbursement **socializes the loss**; it does not **recover the money**.)
 
-Brazil knows this: **MED 2.0** (mandatory since February 2026) extends tracing across up to **five layers** of accounts and allows blocking funds in intermediate accounts — an explicit acknowledgment that recovery is a *tracing-and-speed* problem. It is still triggered and reviewed by humans.
+## 6. Why autonomous agents, why now
 
-## 4. Colombia is a greenfield
+Recovery decomposes into exactly the loop agents are built for: **understand** an unstructured report → **investigate** across the account graph with institutional memory of known mules → **act** inside the window via the standardized ISO 20022 recall (**camt.056**/FRAD → **camt.029** resolution → **pacs.004** return) → **document** for the regulator. Every step is standardized and machine-readable; the only missing piece was an actor fast enough — and auditable enough — to run it. That actor now exists.
 
-Bre-B launched with **no MED equivalent**. There is no standardized, rail-level recovery mechanism: a defrauded victim depends on their bank's customer service and ordinary complaint channels, under the general oversight of the Superintendencia Financiera (SFC). Disputes move at help-desk speed against a crime that moves at network speed.
+## Key numbers
 
-This is the strategic insight: in Colombia, an autonomous recovery layer is not competing against an incumbent mechanism — **it is the first mechanism**.
+| Metric | Value |
+|---|---|
+| Live fast-payment systems worldwide | 100+ jurisdictions (ECB: 117, mid-2025) |
+| Pix scale | ~63.4bn transactions (2024) |
+| MED recovery | **7% of disputed value** (BCB official, 2025); ~89% of requests denied |
+| MED 2.0 | Mandatory Feb 2, 2026 — traces up to **5 account layers** |
+| Bre-B | Live 2025 · 200+ institutions · ~76m keys · **no recovery mechanism** |
+| UK mandatory reimbursement | 88% / £173m repaid in year one — socializes loss, doesn't recover funds |
 
-## 5. The category insight: recovery, not prevention
-
-The fraud-tech industry overwhelmingly sells **prevention**: scoring, friction, transaction blocking before the money leaves. Prevention is crowded, and it will never be perfect — social engineering defeats models because the *legitimate account holder* authorizes the payment.
-
-Almost nobody competes in **recovery**: what happens to the money prevention misses. Today that money is written off. Our research says it shouldn't be — it is not *gone*, it is just *faster than the humans chasing it*. The MED's ~13% is not a ceiling on what's recoverable; it is a measurement of human latency.
-
-## 6. Why autonomous agents, and why now
-
-Recovery decomposes into exactly the loop agents are good at:
-
-- **Understand** an unstructured victim report (intake) →
-- **Investigate** by following money across a graph of accounts, enriched with institutional memory of known mules (tracing) →
-- **Act** inside the live window by issuing the standardized ISO 20022 recall — **camt.056** (FIToFIPaymentCancellationRequest, reason code FRAD), answered by **camt.029** (resolution) and settled by **pacs.004** (return) →
-- **Document** the case in an auditable, regulator-ready dossier (evidence).
-
-Every step is standardized (ISO 20022 is the lingua franca of both Pix messaging and modern rails), every step is machine-readable, and the only thing missing was an actor fast enough to run the loop inside the window. That actor now exists.
-
-Reversa is the implementation of this research: a multi-agent system that collapses the recovery window from days to seconds, learns the mule network across cases, and plugs into a bank's agent ecosystem through the A2A protocol — Colombia-first (where no mechanism exists), Brazil-portable (where the mechanism exists and underperforms), and rail-agnostic by design.
-
----
-
-*Synthetic-data note: all accounts, institutions ("Banco Andes", "PagoYa"), keys, and transactions in the Reversa demo are fictional. The research above informed the system's design; none of its real-world data flows into the demo.*
+*Design implications built into Reversa: rail-agnostic by construction (same agents, thin country config — demoed on both Pix and Bre-B), multi-hop tracing as a first-class capability, a compounding cross-case mule-intelligence moat, and autonomy with regulator-grade auditability.*
