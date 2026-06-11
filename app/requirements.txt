@@ -1,0 +1,16 @@
+# Requirements explícitos del contenedor de Agent Engine (LESSONS.md — Deploy):
+# el requirements auto-generado solo pone google-adk base y el arranque crashea
+# con "No module named 'a2a'". Los pins de opentelemetry evitan que aiplatform
+# suba otel a >=1.42 y rompa google-adk 2.2.0.
+google-adk[a2a]==2.2.0
+sse-starlette>=2.1.0
+python-dotenv>=1.0.0
+opentelemetry-api==1.41.1
+opentelemetry-sdk==1.41.1
+opentelemetry-exporter-otlp-proto-http==1.41.1
+nest-asyncio>=1.6.0,<2.0.0
+google-cloud-logging>=3.12.0,<4.0.0
+google-cloud-aiplatform[agent-engines]>=1.130.0
+# Telemetría GenAI (app_utils/telemetry.py degrada con warning si falta;
+# se incluye para que el contenedor local iguale al de CI).
+opentelemetry-instrumentation-google-genai>=0.6b0,<1.0.0
