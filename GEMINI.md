@@ -38,7 +38,8 @@ Ask the user: Option A (simple single-project) or Option B (full CI/CD pipeline 
 | Command | Purpose |
 |---------|---------|
 | `make playground` | Interactive local testing |
-| `make test` | Run unit and integration tests |
+| `make test` | Run unit tests (no GCP needed) |
+| `make test-integration` | Run integration tests (needs GCP project + Vertex auth) |
 | `make eval` | Run evaluation against evalsets |
 | `make eval-all` | Run all evalsets |
 | `make lint` | Check code quality |

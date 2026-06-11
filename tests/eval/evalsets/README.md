@@ -66,7 +66,7 @@ ADK eval measures:
 ## Creating Custom Evalsets
 
 1. Copy `basic.evalset.json` as a template
-2. Add cases based on your `DESIGN_SPEC.md` scenarios
+- Add cases based on the canonical BR/CO fraud scenarios (README "Try it" section)
 3. Include expected tool calls for capability tests
 4. Run `make eval EVALSET=your_evalset.json`
 
@@ -74,7 +74,7 @@ ADK eval measures:
 
 - Start with 3-5 representative cases
 - Include both happy path and edge cases
-- Test each core capability from DESIGN_SPEC.md
+- Add cases based on the canonical BR/CO fraud scenarios (README "Try it" section)
 - Add cases when you find bugs in production
 
 See [ADK documentation](https://google.github.io/adk-docs/) for advanced evaluation options.

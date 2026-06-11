@@ -1,11 +1,15 @@
 # Reversa
 
-Recuperación autónoma de fraude en rieles de pago inmediato (Bre-B / Pix).
-Pipeline multi-agente (ADK + A2A): intake → rastreo del dinero por cuentas mula →
-bloqueo camt.056 → expediente auditable con fundamento normativo (Vertex AI Search)
-y memoria institucional de mulas (Memory Bank).
+[![Deploy to Agent Engine](https://github.com/alinedmooner/reversa/actions/workflows/staging.yaml/badge.svg)](https://github.com/alinedmooner/reversa/actions/workflows/staging.yaml)
 
-Scaffold generado con [`googleCloudPlatform/agent-starter-pack`](https://github.com/GoogleCloudPlatform/agent-starter-pack) versión `0.41.3` (template `adk_a2a`, CI/CD GitHub Actions). Ver gotchas aplicados en [LESSONS.md](LESSONS.md).
+Autonomous fraud recovery on instant payment rails (Pix / Bre-B).
+Multi-agent pipeline (ADK + A2A): intake → money tracing through mule accounts →
+camt.056 blocking → auditable dossier grounded in regulation (Vertex AI Search) →
+institutional mule intelligence (Memory Bank). The pipeline is rail-agnostic:
+the same agents handle a Brazilian Pix case (in Portuguese) and a Colombian
+Bre-B case (in Spanish) — only a thin data/config layer changes.
+
+Scaffold generated with [`googleCloudPlatform/agent-starter-pack`](https://github.com/GoogleCloudPlatform/agent-starter-pack) `0.41.3` (`adk_a2a` template, GitHub Actions CI/CD). Engineering gotchas applied throughout are logged in [LESSONS.md](LESSONS.md) (in Spanish — the prototype's field notes).
 
 ## Why Reversa — the research
 
@@ -25,14 +29,16 @@ Colombia's **Bre-B** (live 2025, **200+ institutions**) launched with **no recov
 
 ```
 reversa/
-├── app/         # Core agent code
+├── app/         # Core agent code (pipeline, money graph, camt.056 recall, A2A server)
 │   ├── agent.py               # Main agent logic
 │   ├── agent_engine_app.py    # Agent Engine application logic
 │   └── app_utils/             # App utilities and helpers
+├── banco_andes/               # Fictional counterparty bank agent (A2A consumer demo)
+├── docs/                      # Research + normative manual (Vertex AI Search corpus)
 ├── .github/                   # CI/CD pipeline configurations for GitHub Actions
 ├── deployment/                # Infrastructure and deployment scripts
 ├── notebooks/                 # Jupyter notebooks for prototyping and evaluation
-├── tests/                     # Unit, integration, and load tests
+├── tests/                     # Unit, integration, eval and load tests
 ├── GEMINI.md                  # AI-assisted development guide
 ├── Makefile                   # Development commands
 └── pyproject.toml             # Project dependencies
@@ -43,19 +49,35 @@ reversa/
 ## Requirements
 
 Before you begin, ensure you have:
-- **uv**: Python package manager (used for all dependency management in this project) - [Install](https://docs.astral.sh/uv/getting-started/installation/) ([add packages](https://docs.astral.sh/uv/concepts/dependencies/) with `uv add <package>`)
-- **Google Cloud SDK**: For GCP services - [Install](https://cloud.google.com/sdk/docs/install)
+- **Python 3.13 + pip**: local dev uses a plain virtualenv (pyenv recommended); `uv` is only used by CI against the committed `uv.lock`
+- **Google Cloud SDK**: For GCP services - [Install](https://cloud.google.com/sdk/docs/install) (project with Vertex AI + Vertex AI Search enabled)
 - **Terraform**: For infrastructure deployment - [Install](https://developer.hashicorp.com/terraform/downloads)
 - **make**: Build automation tool - [Install](https://www.gnu.org/software/make/) (pre-installed on most Unix-based systems)
 
 
 ## Quick Start
 
-Install required packages and launch the local development environment:
-
 ```bash
+# 1) Python env (once): pyenv virtualenv 3.13.13 reversa && pyenv local reversa
+# 2) Agent env vars — copy the examples and set your GCP project:
+cp app/.env.example app/.env && cp banco_andes/.env.example banco_andes/.env
+# 3) Install dependencies and launch the local playground (adk web):
 make install && make playground
 ```
+
+### Try it
+
+**Primary case — Brazil / Pix** (the victim reports in Portuguese; the product answers in kind — that's a feature):
+
+> Caí no golpe do falso parente, fiz um Pix de R$ 50.000 para a chave 123.456.789-09 há 10 minutos.
+
+Expected: a complete dossier **in Portuguese** — intake JSON with `rail: PIX_BR`, the 3-hop chave trace (CPF → +55 phone → random EVP key) across fictional institutions, a **camt.056 recall in BRL** with its `message_id`, a next-step recommendation grounded in the **MED (Banco Central do Brasil)** context via Vertex AI Search, and the section-5 mule-intelligence list.
+
+**Rail-agnostic proof — Colombia / Bre-B** (same agents, zero code changes):
+
+> Me hicieron un secuestro relámpago, transferí $11.000.000 a la llave 3001234567 hace 10 minutos.
+
+Expected: the dossier **in Spanish** — llave trace, **camt.056 in COP**, and a recommendation grounded in Bre-B's regulatory reality: **no MED equivalent, SFC oversight**.
 
 ## Commands
 
@@ -67,7 +89,7 @@ make install && make playground
 | `make test`          | Run unit tests (no GCP needed)                                                              |
 | `make test-integration` | Run integration tests (needs GCP project + Vertex auth)                                  |
 | `make deploy`        | Deploy agent to Agent Engine                                                                |
-| `make register-gemini-enterprise` | Register deployed agent to Gemini Enterprise                                  |
+| `make eval`          | Run the canonical-case evals (`adk eval`, judged on dossier rubrics)                        |
 | `make inspector`     | Launch A2A Protocol Inspector (requires uv + npm; not converted to pip)                     |
 | `make setup-dev-env` | Set up development environment resources using Terraform                                   |
 
@@ -95,8 +117,15 @@ See the [development guide](https://googlecloudplatform.github.io/agent-starter-
 gcloud config set project <your-project-id>
 make deploy
 ```
-To set up your production infrastructure, run `uvx agent-starter-pack setup-cicd`.
-See the [deployment guide](https://googlecloudplatform.github.io/agent-starter-pack/guide/deployment) for details.
+Every push to `main` also deploys automatically via GitHub Actions (WIF, no service-account keys) — see `.github/workflows/staging.yaml`.
+
+**Live deployment (hackathon)**: Agent Engine `reasoningEngines/4059650367179194368`, `us-central1`, project `reversa-datamirai` — [Console](https://console.cloud.google.com/vertex-ai/agents/agent-engines/locations/us-central1/agent-engines/4059650367179194368?project=reversa-datamirai) · [A2A agent card](https://us-central1-aiplatform.googleapis.com/v1beta1/projects/reversa-datamirai/locations/us-central1/reasoningEngines/4059650367179194368/a2a/v1/card) (requires a `gcloud auth print-access-token` bearer).
+
+## Submission assets (pending)
+
+- [ ] Demo video link
+- [ ] Devpost submission link
+- [ ] Architecture diagram
 
 ## Observability
 

@@ -64,11 +64,19 @@ if not _project and "REVERSA_DATA_STORE_ID" not in os.environ:
     )
 
 
-def get_current_time() -> dict:
-    """Devuelve la fecha y hora actual real en Colombia (America/Bogota), en formato ISO 8601.
-    Úsala para resolver expresiones de tiempo relativas (por ejemplo 'hace 10 minutos')
-    y calcular el valor absoluto de fecha_hora."""
-    return {"current_time": datetime.now(ZoneInfo("America/Bogota")).isoformat()}
+def get_current_time(timezone: str = "America/Bogota") -> dict:
+    """Devuelve la fecha y hora actual real en la zona horaria del caso, en formato ISO 8601.
+
+    Úsala para resolver expresiones de tiempo relativas ('hace 10 minutos',
+    'há 10 minutos') y calcular el valor absoluto de fecha_hora. Pasa
+    timezone='America/Sao_Paulo' para casos Pix (Brasil) y
+    timezone='America/Bogota' para casos Bre-B (Colombia).
+    """
+    try:
+        tz = ZoneInfo(timezone)
+    except Exception:
+        tz = ZoneInfo("America/Bogota")
+    return {"current_time": datetime.now(tz).isoformat(), "timezone": str(tz)}
 
 
 intake_agent = LlmAgent(
@@ -76,10 +84,19 @@ intake_agent = LlmAgent(
     model=_gemini(),
     description="Convierte el reporte de la víctima en datos estructurados del caso.",
     instruction=(
-        "Eres el agente de intake de Reversa. Del reporte de la víctima extrae SOLO un JSON "
-        "con: monto, llave_destino, fecha_hora, tipo_fraude (coacción | phishing | suplantación | otro). "
-        "Para tiempos relativos ('hace 10 minutos'), llama a get_current_time y calcula el "
-        "timestamp absoluto ISO 8601. Responde ÚNICAMENTE con el JSON."
+        "Eres el agente de intake de Reversa. El reporte de la víctima puede venir en "
+        "español (riel Bre-B, Colombia) o en portugués brasileño (riel Pix, Brasil). "
+        "Extrae SOLO un JSON con: monto, llave_destino (la llave/chave reportada, tal cual), "
+        "fecha_hora, tipo_fraude (coacción | phishing | suplantación | otro), "
+        "rail y idioma_reporte.\n"
+        "Detección del riel: rail='PIX_BR' si el reporte es de Pix Brasil (portugués, "
+        "montos en R$/reais, chaves tipo CPF 000.000.000-00, celular +55 o aleatoria/EVP "
+        "tipo UUID, 'golpe'); rail='BREB_CO' si es de Bre-B Colombia (español, pesos, "
+        "llaves numéricas). idioma_reporte='pt' o 'es' según el idioma del reporte.\n"
+        "Para tiempos relativos ('hace 10 minutos', 'há 10 minutos'), llama a "
+        "get_current_time con timezone='America/Sao_Paulo' si rail=PIX_BR o "
+        "timezone='America/Bogota' si rail=BREB_CO, y calcula el timestamp absoluto "
+        "ISO 8601. Responde ÚNICAMENTE con el JSON."
     ),
     tools=[get_current_time],
     output_key="intake_json",
@@ -124,8 +141,10 @@ evidence_agent = LlmAgent(
     model=_gemini(),
     description="Redacta el expediente final del caso para el banco/regulador.",
     instruction=(
-        "Eres el agente de evidencia de Reversa. Redacta el expediente final del caso en "
-        "español, claro y auditable, con estas secciones:\n"
+        "Eres el agente de evidencia de Reversa. Redacta el expediente final del caso "
+        "EN EL IDIOMA DEL REPORTE de la víctima (idioma_reporte del intake: 'pt' → "
+        "portugués brasileño; 'es' → español), claro y auditable, con estas secciones "
+        "(títulos traducidos al idioma del expediente):\n"
         "1. Datos del reporte: {intake_json}\n"
         "2. Rastreo del dinero: {trace_result}\n"
         "3. Acción ejecutada: {action_result}\n"
@@ -134,13 +153,15 @@ evidence_agent = LlmAgent(
         "ejecutada. Si la acción reporta BLOQUEO EMITIDO, el estado final es FONDOS BLOQUEADOS "
         "(no 'interceptable'): el rastreo refleja el estado ANTES de la acción.\n"
         "Termina el expediente con una sección '5. Inteligencia de mulas' que liste "
-        "explícitamente las llaves confirmadas como cuentas mula en este caso, con banco, "
-        "dueño y case_id, para alimentar la memoria institucional.\n"
+        "explícitamente las llaves/chaves confirmadas como cuentas mula en este caso, con "
+        "banco, dueño y case_id, para alimentar la memoria institucional.\n"
         "Antes de redactar la sección de 'Siguiente paso recomendado', consulta el manual "
-        "normativo (herramienta de búsqueda) y fundamenta la recomendación en lo que diga: "
-        "flujo camt.056 → camt.029 → pacs.004, SLA de seguimiento, y la diferencia Brasil "
-        "(MED) vs Colombia (sin mecanismo equivalente). Cita el manual cuando afirmes algo "
-        "normativo."
+        "normativo (herramienta de búsqueda) y fundamenta la recomendación SEGÚN EL RAIL "
+        "del caso: para rail=PIX_BR, enmarca el recall camt.056 dentro del MED del Banco "
+        "Central do Brasil (flujo camt.056 → camt.029 → pacs.004, SLA de seguimiento, y el "
+        "contexto MED 2.0 de rastreo multi-capa); para rail=BREB_CO, destaca que Bre-B no "
+        "tiene mecanismo equivalente al MED y que la gestión pasa por la entidad bajo "
+        "vigilancia de la SFC. Cita el manual cuando afirmes algo normativo."
     ),
     # Tools integradas no se mezclan con function tools en el mismo agente:
     # la búsqueda normativa vive dedicada en esta etapa (LESSONS.md — Search/RAG).

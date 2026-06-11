@@ -18,8 +18,10 @@ playground:
 	@echo "==============================================================================="
 	@echo "| 🚀 Starting your agent playground...                                        |"
 	@echo "|                                                                             |"
-	@echo "| 💡 Try: Me hicieron un secuestro relámpago, transferí \$$11.000.000 a la     |"
-	@echo "|        llave 3001234567 hace 10 minutos.                                    |"
+	@echo "| 💡 Try (BR): Caí no golpe do falso parente, fiz um Pix de R\$$ 50.000 para   |"
+	@echo "|        a chave 123.456.789-09 há 10 minutos.                                |"
+	@echo "| 💡 Try (CO): Me hicieron un secuestro relámpago, transferí \$$11.000.000 a   |"
+	@echo "|        la llave 3001234567 hace 10 minutos.                                 |"
 	@echo "|                                                                             |"
 	@echo "| 🔍 IMPORTANT: Select the 'app' folder to interact with your agent.          |"
 	@echo "==============================================================================="
@@ -48,7 +50,7 @@ inspector: setup-inspector-if-needed build-inspector-if-needed
 	cd tools/a2a-inspector/backend && uv run app.py
 
 # Internal: Setup inspector if not already present (runs once)
-# TODO: Update to --branch v1.0.0 when a2a-inspector publishes releases
+# Note: a2a-inspector has no tagged releases yet; pinned to commit 893e406.
 setup-inspector-if-needed:
 	@if [ ! -d "tools/a2a-inspector" ]; then \
 		echo "" && \

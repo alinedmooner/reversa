@@ -90,6 +90,11 @@ Vertex AI, junio 2026), organizado por tema, para no repetirlos en el build fina
       `/.well-known/agent-card.json` (constante `AGENT_CARD_WELL_KNOWN_PATH`).
 - [ ] Un GET al endpoint JSON-RPC devuelve 405 — es normal, no es un puerto
       equivocado; verificar con el agent card, no con `GET /`.
+- [ ] A2A REST sin autenticación deriva user_id (`A2A_USER_{contextId}`) Y
+      session_id del contextId (request_converter de ADK 2.2.0): "sesión nueva,
+      mismo usuario" NO existe por ese camino, y el scope del Memory Bank
+      (app_name + user_id) queda atado al contextId. Verificado contra el
+      engine desplegado en la verificación de memoria cross-case.
 
 ## Search / RAG (Vertex AI Search · Discovery Engine)
 

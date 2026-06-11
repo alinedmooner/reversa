@@ -1,9 +1,9 @@
 [project]
 name = "reversa"
 version = "0.1.0"
-description = ""
+description = "Autonomous fraud recovery on instant payment rails (Pix / Bre-B)"
 authors = [
-    {name = "Your Name", email = "your@email.com"},
+    {name = "Daniel M.C.", email = "alinedmooner@gmail.com"},
 ]
 dependencies = [
     # LESSONS.md: el proto está probado sobre google-adk 2.2.0; [a2a] es

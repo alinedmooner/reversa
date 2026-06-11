@@ -3,17 +3,25 @@
     "rubric_based_final_response_quality_v1": {
       "threshold": 0.8,
       "judgeModelOptions": {
-        "judgeModel": "gemini-3-flash-preview",
+        "judgeModel": "gemini-2.5-flash",
         "numSamples": 1
       },
       "rubrics": [
         {
-          "rubricId": "relevance",
-          "rubricContent": { "textProperty": "The response directly addresses the user's query." }
+          "rubricId": "complete_dossier",
+          "rubricContent": { "textProperty": "The response is a complete fraud-case dossier covering: the structured report data, the hop-by-hop traced mule route, the camt.056 recall action with a message_id, and a mule-intelligence section listing the confirmed mule keys." }
         },
         {
-          "rubricId": "helpfulness",
-          "rubricContent": { "textProperty": "The response is helpful and provides useful information." }
+          "rubricId": "reconciled_state",
+          "rubricContent": { "textProperty": "The dossier's conclusion states the funds' FINAL state as blocked/frozen (reconciling the recall action), not merely 'interceptable'." }
+        },
+        {
+          "rubricId": "victim_language",
+          "rubricContent": { "textProperty": "The dossier is written in the same language as the victim's report (Brazilian Portuguese for the Pix/Brazil case, Spanish for the Bre-B/Colombia case)." }
+        },
+        {
+          "rubricId": "rail_grounding",
+          "rubricContent": { "textProperty": "The recommended next step is grounded in the correct rail's regulatory context: MED / Banco Central do Brasil framing for a Pix case, or the absence of a MED-equivalent mechanism under SFC oversight for a Bre-B Colombia case." }
         }
       ]
     }
