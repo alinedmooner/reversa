@@ -41,10 +41,20 @@ locals {
     "telemetry.googleapis.com",
   ]
 
-  deploy_project_ids = {
+  # Proyecto único: si staging y prod son el MISMO proyecto, se colapsa a un
+  # solo entorno ("prod") — evita colisiones de nombres (SAs, datasets BQ,
+  # sinks de logging) y un segundo reasoning engine siempre encendido.
+  single_project = var.staging_project_id == var.prod_project_id
+
+  deploy_project_ids = local.single_project ? {
+    prod = var.prod_project_id
+    } : {
     prod    = var.prod_project_id
     staging = var.staging_project_id
   }
+
+  # Clave a usar donde el scaffold espera el entorno "staging".
+  staging_key = local.single_project ? "prod" : "staging"
 
   all_project_ids = [
     var.cicd_runner_project_id,

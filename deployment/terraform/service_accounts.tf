@@ -22,8 +22,10 @@ resource "google_service_account" "cicd_runner_sa" {
 resource "google_service_account" "app_sa" {
   for_each = local.deploy_project_ids
 
-  account_id   = "${var.project_name}-app"
-  display_name = "${var.project_name} Agent Service Account"
+  # Sufijo por entorno: con staging y prod apuntando al MISMO proyecto
+  # (setup de proyecto único), un account_id fijo colisionaría (409).
+  account_id   = "${var.project_name}-app-${each.key}"
+  display_name = "${var.project_name} Agent Service Account (${each.key})"
   project      = each.value
   depends_on   = [resource.google_project_service.cicd_services, resource.google_project_service.deploy_project_services]
 }

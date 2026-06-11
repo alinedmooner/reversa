@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Deploy to Staging
+# Proyecto único (reversa-datamirai): este workflow ES el deploy a Agent
+# Engine en cada push a main. El workflow de prod queda solo como
+# workflow_dispatch manual (mismo proyecto, SA de prod).
+name: Deploy to Agent Engine
 
 on:
   push:
@@ -100,11 +103,3 @@ jobs:
           echo "Load test results copied to gs://${{ vars.LOGS_BUCKET_NAME_STAGING }}/load-test-results/results-${TIMESTAMP}"
           echo "HTTP link: https://console.cloud.google.com/storage/browser/${{ vars.LOGS_BUCKET_NAME_STAGING }}/load-test-results/results-${TIMESTAMP}"
           echo "_________________________________________________________________________"
-
-  call_production_workflow:
-    needs: deploy_and_test_staging
-    uses: ./.github/workflows/deploy-to-prod.yaml
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-    secrets: inherit

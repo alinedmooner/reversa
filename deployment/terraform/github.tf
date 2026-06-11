@@ -101,7 +101,7 @@ resource "github_actions_variable" "cicd_project_id" {
 resource "github_actions_variable" "app_sa_email_staging" {
   repository    = var.repository_name
   variable_name = "APP_SA_EMAIL_STAGING"
-  value         = google_service_account.app_sa["staging"].email
+  value         = google_service_account.app_sa[local.staging_key].email
   depends_on    = [github_repository.repo]
 }
 
@@ -115,7 +115,7 @@ resource "github_actions_variable" "app_sa_email_prod" {
 resource "github_actions_variable" "app_service_account_staging" {
   repository    = var.repository_name
   variable_name = "APP_SERVICE_ACCOUNT_STAGING"
-  value         = google_service_account.app_sa["staging"].email
+  value         = google_service_account.app_sa[local.staging_key].email
   depends_on    = [github_repository.repo]
 }
 
